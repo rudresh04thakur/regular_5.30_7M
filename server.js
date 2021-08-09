@@ -48,14 +48,18 @@ function initPage(page_body, page_title = 'Home Page', page_css = '', page_js = 
     return c_body;
 }
 
-http.createServer(function (req, res, next) {
-    console.log("URL ========> ", req.url)
-    console.log("Method ========> ", req.method)
+http.createServer(function(req, res, next) {
+    // console.log("URL ========> ", req.url)
+    // console.log("Method ========> ", req.method)
     if (req.url == '/' && req.method == 'GET') {
 
         res.writeHead(200, { "content-type": 'text/html' });
-        connection.connect();
-        var table=''
+        if(connection.state === 'connected'){
+            console.log(connection.state)
+            connection.end()
+        }
+        
+        //connection.connect();
         connection.query('select * from users',function(error,results,fields){
             var tr = '';
             results.forEach((record,index)=>{
@@ -65,7 +69,7 @@ http.createServer(function (req, res, next) {
                 tr+="<td>"+record['mobile']+"</td>";
                 tr+="<td>"+record['status']+"</td></tr>";
             });
-            const table_1 = `<br><hr><br>
+            let table = `<br><hr><br>
             <table class="table table-stripped">
                 <thead>
                     <tr>
@@ -81,12 +85,16 @@ http.createServer(function (req, res, next) {
                 </tbody>
             </table>
         `
-        });
+
+
         inner_body = '<h3>Basic Navbar Example</h3>';
         inner_body += '<p>A navigation bar is a navigation header that is placed at the top of the page.</p>';
-        inner_body += table_1;
-        console.log("Out of callback ",table)
+        inner_body += table;
+       // console.log("Out of callback ",table)
         res.end(initPage(inner_body))
+        });
+        //connection.end();
+        
 
 
     } else if (req.url == '/login' && req.method == 'GET') {
@@ -115,13 +123,13 @@ http.createServer(function (req, res, next) {
             body = parse(data.toString())
             //console.log(parse(resBody.toString()))
             //Contect to DB
-            connection.connect(); 
+            //connection.connect(); 
             connection.query('SELECT * from users where email="'+body['email']+'" and password="'+body['password']+'"', 
             function (error, results, fields) {
             if (error) throw error;
             console.log('Login Success',results);
             });
-            connection.end();
+            //connection.end();
 
             //DB End
         })
@@ -164,14 +172,15 @@ http.createServer(function (req, res, next) {
             body = parse(data.toString())
             //console.log(parse(resBody.toString()))
             //Contect to DB
-            connection.connect(); 
+            
+            //connection.connect(); 
             let str = `INSERT into users (name,email,password,mobile) VALUES('${body['name']}','${body['email']}',
             '${body['password']}','${body['contact']}')`; 
             connection.query(str, function (error, results, fields) {
             if (error) throw error;
             console.log('Register Successful');
             });
-            connection.end();
+            //connection.end();
             //DB End
         })
         req.on('end', function () {
